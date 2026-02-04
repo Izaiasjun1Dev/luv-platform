@@ -1,0 +1,212 @@
+# ====================
+# Monorepo .gitignore
+# ====================
+
+# ====================
+# OS & Editor
+# ====================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# ====================
+# Environment & Secrets
+# ====================
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+*.pem
+*.key
+secrets/
+.secrets
+
+# ====================
+# Backend (Python/FastAPI)
+# ====================
+back/__pycache__/
+back/**/__pycache__/
+back/*.py[cod]
+back/**/*.py[cod]
+back/*$py.class
+back/**/*$py.class
+*.pyc
+__pycache__/
+
+# Virtual environments
+back/.venv/
+back/venv/
+back/env/
+back/.env/
+.venv/
+venv/
+
+# Poetry
+back/poetry.lock
+back/.poetry/
+
+# Distribution / packaging
+back/build/
+back/dist/
+back/*.egg-info/
+back/**/*.egg-info/
+back/.eggs/
+
+# Testing
+back/.pytest_cache/
+back/.coverage
+back/htmlcov/
+back/.tox/
+back/.nox/
+
+# Mypy
+back/.mypy_cache/
+
+# Logs
+back/*.log
+back/logs/
+
+# ====================
+# Frontend (React/Vite)
+# ====================
+front/node_modules/
+front/dist/
+front/build/
+front/.cache/
+front/.parcel-cache/
+front/*.local
+
+# Logs
+front/npm-debug.log*
+front/yarn-debug.log*
+front/yarn-error.log*
+front/pnpm-debug.log*
+
+# Testing
+front/coverage/
+front/.nyc_output/
+
+# TypeScript
+front/*.tsbuildinfo
+
+# ====================
+# Mobile (React Native / Expo)
+# ====================
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
+mobile/*.jks
+mobile/*.p8
+mobile/*.p12
+mobile/*.mobileprovision
+
+# Logs
+mobile/npm-debug.log*
+mobile/yarn-debug.log*
+mobile/yarn-error.log*
+
+# iOS
+mobile/ios/Pods/
+mobile/ios/build/
+mobile/ios/*.xcworkspace
+mobile/ios/*.xcuserdata/
+mobile/ios/DerivedData/
+
+# Android
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/local.properties
+mobile/android/*.keystore
+mobile/android/!debug.keystore
+
+# Gradle
+mobile/.gradle/
+mobile/gradle-app.setting
+
+# Expo
+mobile/.expo-shared/
+
+# ====================
+# Infrastructure (Terraform)
+# ====================
+infra/.terraform/
+infra/**/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/*.tfstate.backup
+infra/.terraform.lock.hcl
+infra/**/.terraform.lock.hcl
+infra/crash.log
+infra/override.tf
+infra/override.tf.json
+infra/*_override.tf
+infra/*_override.tf.json
+infra/.terraformrc
+infra/terraform.rc
+
+# Terraform variables with secrets
+infra/*.tfvars
+infra/*.auto.tfvars
+!infra/*.example.tfvars
+
+# ====================
+# AWS
+# ====================
+.aws/
+*.zip
+lambda_packages/
+layer/
+
+# ====================
+# General
+# ====================
+*.log
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Artifacts
+artifacts/
+
+# Coverage
+coverage/
+
+# IDE specific
+.idea/
+*.iml
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Documentation build
+docs/_build/
+site/
+
+# Package manager locks (optional - uncomment if you want to track them)
+# !back/poetry.lock
+# !front/package-lock.json
+# !front/yarn.lock
+# !mobile/package-lock.json
+# !mobile/yarn.lock
