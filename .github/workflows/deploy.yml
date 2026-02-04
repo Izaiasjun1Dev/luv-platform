@@ -22,6 +22,8 @@ jobs:
   deploy:
     name: Build & Deploy
     runs-on: ubuntu-latest
+    environment:
+      name: ${{ (github.ref == 'refs/heads/main' && 'prod') || (github.ref == 'refs/heads/homolog' && 'homolog') || (github.ref == 'refs/heads/develop' && 'dev') || 'dev' }}
     env:
       AWS_REGION: us-east-1
       PROJECT_NAME: luv
