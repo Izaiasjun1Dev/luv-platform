@@ -1,0 +1,100 @@
+name: CI/CD Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - homolog
+      - develop
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - dev
+          - homolog
+          - prod
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-1
+      PROJECT_NAME: luv
+
+    steps:
+      - name: Set Environment
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "ENV=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "ENV=prod" >> $GITHUB_ENV
+          elif [ "${{ github.ref }}" == "refs/heads/homolog" ]; then
+            echo "ENV=homolog" >> $GITHUB_ENV
+          elif [ "${{ github.ref }}" == "refs/heads/develop" ]; then
+            echo "ENV=dev" >> $GITHUB_ENV
+          else
+            echo "ENV=dev" >> $GITHUB_ENV
+          fi
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, Tag, and Push Backend Image
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.registry }}
+          ECR_REPOSITORY: ${{ env.PROJECT_NAME }}-${{ env.ENV }}-backend
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build a docker container and push it to ECR.
+          # The -t flag tags the image.
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./back
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: |
+          cd infra
+          # Initialize terraform with the s3 backend. 
+          # We use -reconfigure to ensure we are using the correct backend settings for "prod".
+          terraform init \
+            -backend-config="backend.hcl" \
+            -backend-config="key=${{ env.ENV }}/terraform.tfstate" \
+            -reconfigure
+
+      - name: Terraform Plan
+        env:
+          TF_VAR_github_token: ${{ secrets.TF_VAR_GITHUB_TOKEN }}
+          TF_VAR_image_tag: ${{ github.sha }}
+          TF_VAR_build_image: false
+        run: |
+          cd infra
+          terraform plan -var-file="envs/${{ env.ENV }}.tfvars"
+
+      - name: Terraform Apply
+        env:
+          TF_VAR_github_token: ${{ secrets.TF_VAR_GITHUB_TOKEN }}
+          TF_VAR_image_tag: ${{ github.sha }}
+          TF_VAR_build_image: false
+        run: |
+          cd infra
+          terraform apply -var-file="envs/${{ env.ENV }}.tfvars" -auto-approve
