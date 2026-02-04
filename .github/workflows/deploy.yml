@@ -61,12 +61,18 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ env.PROJECT_NAME }}-${{ env.ENV }}-backend
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          cd back
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "🚀 Debug: ENV=$ENV, PROJECT_NAME=$PROJECT_NAME"
+          # Construct the repository name and full tag
+          FULL_REPO="${ECR_REGISTRY}/${PROJECT_NAME}-${ENV}-backend"
+          echo "📦 Building image: $FULL_REPO:$IMAGE_TAG"
+          
+          # Build using explicit paths for file and context
+          docker build -t "$FULL_REPO:$IMAGE_TAG" -f back/Dockerfile back
+          
+          echo "⬆️ Pushing image..."
+          docker push "$FULL_REPO:$IMAGE_TAG"
           echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Setup Terraform
@@ -75,11 +81,9 @@ jobs:
       - name: Terraform Init
         run: |
           cd infra
-          # Initialize terraform with the s3 backend. 
-          # We use -reconfigure to ensure we are using the correct backend settings for "prod".
           terraform init \
             -backend-config="backend.hcl" \
-            -backend-config="key=${{ env.ENV }}/terraform.tfstate" \
+            -backend-config="key=$ENV/terraform.tfstate" \
             -reconfigure
 
       - name: Terraform Plan
@@ -89,7 +93,7 @@ jobs:
           TF_VAR_build_image: false
         run: |
           cd infra
-          terraform plan -var-file="envs/${{ env.ENV }}.tfvars"
+          terraform plan -var-file="envs/$ENV.tfvars"
 
       - name: Terraform Apply
         env:
@@ -98,4 +102,4 @@ jobs:
           TF_VAR_build_image: false
         run: |
           cd infra
-          terraform apply -var-file="envs/${{ env.ENV }}.tfvars" -auto-approve
+          terraform apply -var-file="envs/$ENV.tfvars" -auto-approve
