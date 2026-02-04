@@ -54,6 +54,15 @@ jobs:
           path: back
           ref: ${{ (github.ref == 'refs/heads/main' && 'main') || (github.ref == 'refs/heads/homolog' && 'homolog') || (github.ref == 'refs/heads/develop' && 'develop') || 'develop' }}
 
+      - name: Checkout Infra Repo
+        uses: actions/checkout@v4
+        with:
+          repository: Izaiasjun1Dev/infra_alufe_services
+          token: ${{ secrets.TF_VAR_GITHUB_TOKEN }}
+          path: infra
+          # Using main because usually infra flows are more stable, but change to a branch if needed
+          ref: main
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
