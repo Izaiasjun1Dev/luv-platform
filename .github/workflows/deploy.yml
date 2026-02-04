@@ -60,7 +60,7 @@ jobs:
       - name: Build, Tag, and Push Backend Image
         id: build-image
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.registry }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ env.PROJECT_NAME }}-${{ env.ENV }}-backend
           IMAGE_TAG: ${{ github.sha }}
         run: |
