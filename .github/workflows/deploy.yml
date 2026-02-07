@@ -49,7 +49,7 @@ jobs:
       - name: Checkout Backend Repo
         uses: actions/checkout@v4
         with:
-          repository: Izaiasjun1Dev/back_sua_assistente
+          repository: Izaiasjun1Dev/back_luv
           token: ${{ secrets.TF_VAR_GITHUB_TOKEN }}
           path: back
           ref: ${{ (github.ref == 'refs/heads/main' && 'main') || (github.ref == 'refs/heads/homolog' && 'homolog') || (github.ref == 'refs/heads/develop' && 'develop') || 'develop' }}
