@@ -22,6 +22,10 @@ jobs:
   deploy:
     name: Build & Deploy
     runs-on: ubuntu-latest
+    # Explicitly define permissions for security
+    permissions:
+      contents: read
+      id-token: write
     environment:
       name: ${{ (github.ref == 'refs/heads/main' && 'prod') || (github.ref == 'refs/heads/homolog' && 'homolog') || (github.ref == 'refs/heads/develop' && 'dev') || 'dev' }}
     env:
@@ -29,39 +33,36 @@ jobs:
       PROJECT_NAME: luv
 
     steps:
-      - name: Set Environment
+      - name: Set Environment and Target Ref
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "ENV=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+            echo "TARGET_REF=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
           elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
             echo "ENV=prod" >> $GITHUB_ENV
+            echo "TARGET_REF=main" >> $GITHUB_ENV
           elif [ "${{ github.ref }}" == "refs/heads/homolog" ]; then
             echo "ENV=homolog" >> $GITHUB_ENV
+            echo "TARGET_REF=homolog" >> $GITHUB_ENV
           elif [ "${{ github.ref }}" == "refs/heads/develop" ]; then
             echo "ENV=dev" >> $GITHUB_ENV
+            echo "TARGET_REF=develop" >> $GITHUB_ENV
           else
             echo "ENV=dev" >> $GITHUB_ENV
+            echo "TARGET_REF=develop" >> $GITHUB_ENV
           fi
 
-      - name: Checkout Code (Main Repo)
-        uses: actions/checkout@v4
-
-      - name: Checkout Backend Repo
+      - name: Checkout Code with Submodules
         uses: actions/checkout@v4
         with:
-          repository: Izaiasjun1Dev/back_sua_assistente
+          # Note: Using TF_VAR_GITHUB_TOKEN instead of GITHUB_TOKEN because GITHUB_TOKEN
+          # doesn't have permission to access private submodule repositories by default.
+          # This token should be a fine-grained PAT with read-only access to the required repos.
           token: ${{ secrets.TF_VAR_GITHUB_TOKEN }}
-          path: back
-          ref: ${{ (github.ref == 'refs/heads/main' && 'main') || (github.ref == 'refs/heads/homolog' && 'homolog') || (github.ref == 'refs/heads/develop' && 'develop') || 'develop' }}
+          submodules: recursive
 
-      - name: Checkout Infra Repo
-        uses: actions/checkout@v4
-        with:
-          repository: Izaiasjun1Dev/infra_alufe_services
-          token: ${{ secrets.TF_VAR_GITHUB_TOKEN }}
-          path: infra
-          # Using main because usually infra flows are more stable, but change to a branch if needed
-          ref: main
+      - name: Ensure Submodules are Initialized
+        run: git submodule update --init --recursive
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
