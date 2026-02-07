@@ -52,7 +52,7 @@ jobs:
           repository: Izaiasjun1Dev/back_sua_assistente
           token: ${{ secrets.TF_VAR_GITHUB_TOKEN }}
           path: back
-          ref: main
+          ref: ${{ (github.ref == 'refs/heads/main' && 'main') || (github.ref == 'refs/heads/homolog' && 'homolog') || (github.ref == 'refs/heads/develop' && 'develop') || 'develop' }}
 
       - name: Checkout Infra Repo
         uses: actions/checkout@v4
