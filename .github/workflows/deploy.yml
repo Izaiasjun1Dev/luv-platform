@@ -53,6 +53,8 @@ jobs:
           # Note: Using TF_VAR_GITHUB_TOKEN instead of GITHUB_TOKEN because GITHUB_TOKEN
           # doesn't have permission to access private submodule repositories by default.
           # This token should be a fine-grained PAT with read-only access to the required repos.
+          # Submodules will be checked out at the commit SHAs recorded in this repository's Git index,
+          # ensuring reproducible deployments (not floating branch refs).
           token: ${{ secrets.TF_VAR_GITHUB_TOKEN }}
           submodules: recursive
 
