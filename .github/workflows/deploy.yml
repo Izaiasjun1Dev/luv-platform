@@ -33,23 +33,18 @@ jobs:
       PROJECT_NAME: luv
 
     steps:
-      - name: Set Environment and Target Ref
+      - name: Set Environment
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "ENV=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
-            echo "TARGET_REF=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
           elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
             echo "ENV=prod" >> $GITHUB_ENV
-            echo "TARGET_REF=main" >> $GITHUB_ENV
           elif [ "${{ github.ref }}" == "refs/heads/homolog" ]; then
             echo "ENV=homolog" >> $GITHUB_ENV
-            echo "TARGET_REF=homolog" >> $GITHUB_ENV
           elif [ "${{ github.ref }}" == "refs/heads/develop" ]; then
             echo "ENV=dev" >> $GITHUB_ENV
-            echo "TARGET_REF=develop" >> $GITHUB_ENV
           else
             echo "ENV=dev" >> $GITHUB_ENV
-            echo "TARGET_REF=develop" >> $GITHUB_ENV
           fi
 
       - name: Checkout Code with Submodules
@@ -60,9 +55,6 @@ jobs:
           # This token should be a fine-grained PAT with read-only access to the required repos.
           token: ${{ secrets.TF_VAR_GITHUB_TOKEN }}
           submodules: recursive
-
-      - name: Ensure Submodules are Initialized
-        run: git submodule update --init --recursive
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
