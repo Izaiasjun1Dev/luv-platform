@@ -43,8 +43,25 @@ jobs:
             echo "ENV=dev" >> $GITHUB_ENV
           fi
 
-      - name: Checkout Code
+      - name: Checkout Code (Main Repo)
         uses: actions/checkout@v4
+
+      - name: Checkout Backend Repo
+        uses: actions/checkout@v4
+        with:
+          repository: Izaiasjun1Dev/back_sua_assistente
+          token: ${{ secrets.TF_VAR_GITHUB_TOKEN }}
+          path: back
+          ref: ${{ (github.ref == 'refs/heads/main' && 'main') || (github.ref == 'refs/heads/homolog' && 'homolog') || (github.ref == 'refs/heads/develop' && 'develop') || 'develop' }}
+
+      - name: Checkout Infra Repo
+        uses: actions/checkout@v4
+        with:
+          repository: Izaiasjun1Dev/infra_alufe_services
+          token: ${{ secrets.TF_VAR_GITHUB_TOKEN }}
+          path: infra
+          # Using main because usually infra flows are more stable, but change to a branch if needed
+          ref: main
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -60,14 +77,19 @@ jobs:
       - name: Build, Tag, and Push Backend Image
         id: build-image
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.registry }}
-          ECR_REPOSITORY: ${{ env.PROJECT_NAME }}-${{ env.ENV }}-backend
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          # Build a docker container and push it to ECR.
-          # The -t flag tags the image.
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./back
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "🚀 Debug: ENV=$ENV, PROJECT_NAME=$PROJECT_NAME"
+          # Construct the repository name and full tag
+          FULL_REPO="${ECR_REGISTRY}/${PROJECT_NAME}-${ENV}-backend"
+          echo "📦 Building image: $FULL_REPO:$IMAGE_TAG"
+          
+          # Build using explicit paths for file and context
+          docker build -t "$FULL_REPO:$IMAGE_TAG" -f back/Dockerfile back
+          
+          echo "⬆️ Pushing image..."
+          docker push "$FULL_REPO:$IMAGE_TAG"
           echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Setup Terraform
@@ -76,11 +98,9 @@ jobs:
       - name: Terraform Init
         run: |
           cd infra
-          # Initialize terraform with the s3 backend. 
-          # We use -reconfigure to ensure we are using the correct backend settings for "prod".
           terraform init \
             -backend-config="backend.hcl" \
-            -backend-config="key=${{ env.ENV }}/terraform.tfstate" \
+            -backend-config="key=$ENV/terraform.tfstate" \
             -reconfigure
 
       - name: Terraform Plan
@@ -90,7 +110,7 @@ jobs:
           TF_VAR_build_image: false
         run: |
           cd infra
-          terraform plan -var-file="envs/${{ env.ENV }}.tfvars"
+          terraform plan -var-file="envs/$ENV.tfvars"
 
       - name: Terraform Apply
         env:
@@ -99,4 +119,4 @@ jobs:
           TF_VAR_build_image: false
         run: |
           cd infra
-          terraform apply -var-file="envs/${{ env.ENV }}.tfvars" -auto-approve
+          terraform apply -var-file="envs/$ENV.tfvars" -auto-approve
