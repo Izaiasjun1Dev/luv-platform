@@ -1,0 +1,9 @@
+[submodule "back"]
+	path = back
+	url = https://github.com/Izaiasjun1Dev/back_sua_assistente.git
+[submodule "front"]
+	path = front
+	url = https://github.com/Izaiasjun1Dev/front_sua_assistente.git
+[submodule "infra"]
+	path = infra
+	url = https://github.com/Izaiasjun1Dev/infra_alufe_services.git
