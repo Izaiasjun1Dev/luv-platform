@@ -49,10 +49,10 @@ jobs:
       - name: Checkout Backend Repo
         uses: actions/checkout@v4
         with:
-          repository: Izaiasjun1Dev/back_sua_assistente
+          repository: Izaiasjun1Dev/back_luv
           token: ${{ secrets.TF_VAR_GITHUB_TOKEN }}
           path: back
-          ref: ${{ (github.ref == 'refs/heads/main' && 'main') || (github.ref == 'refs/heads/homolog' && 'homolog') || (github.ref == 'refs/heads/develop' && 'develop') || 'develop' }}
+          ref: ${{ github.ref_name }}
 
       - name: Checkout Infra Repo
         uses: actions/checkout@v4
@@ -60,8 +60,7 @@ jobs:
           repository: Izaiasjun1Dev/infra_alufe_services
           token: ${{ secrets.TF_VAR_GITHUB_TOKEN }}
           path: infra
-          # Using main because usually infra flows are more stable, but change to a branch if needed
-          ref: main
+          ref: ${{ github.ref_name }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
