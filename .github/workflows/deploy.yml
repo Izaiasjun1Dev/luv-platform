@@ -73,6 +73,9 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build, Tag, and Push Backend Image
         id: build-image
         env:
@@ -84,11 +87,17 @@ jobs:
           FULL_REPO="${ECR_REGISTRY}/${PROJECT_NAME}-${ENV}-backend"
           echo "📦 Building image: $FULL_REPO:$IMAGE_TAG"
           
-          # Build using explicit paths for file and context
-          docker build -t "$FULL_REPO:$IMAGE_TAG" -f back/Dockerfile back
+          # Build using buildx to disable provenance and sbom (OCI attestations)
+          # which are not supported by AWS Lambda
+          docker buildx build \
+            --platform linux/amd64 \
+            --provenance=false \
+            --sbom=false \
+            -t "$FULL_REPO:$IMAGE_TAG" \
+            -f back/Dockerfile \
+            back \
+            --push
           
-          echo "⬆️ Pushing image..."
-          docker push "$FULL_REPO:$IMAGE_TAG"
           echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Setup Terraform
