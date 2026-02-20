@@ -2,7 +2,7 @@
 set -e
 
 # Configuration
-ENV="homolog"
+ENV="${1:-dev}"
 AWS_REGION="us-east-1"
 PROJECT_NAME="luv"
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
